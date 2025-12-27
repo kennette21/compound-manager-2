@@ -4,6 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Compound Manager',
   slug: 'compound-manager',
+  owner: 'kennette21',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -93,7 +94,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       origin: false,
     },
     eas: {
-      projectId: 'your-project-id',
+      projectId: 'e1259f53-6307-4fc4-9afa-79ff4008c8ba',
     },
   },
 });
