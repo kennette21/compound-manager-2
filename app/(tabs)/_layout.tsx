@@ -1,22 +1,22 @@
 import { Tabs } from 'expo-router';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { usePropertyStore } from '../../src/stores/propertyStore';
 import { useMissionStore } from '../../src/stores/missionStore';
 
-// Simple icon components (replace with proper icons later)
+type IconName = 'map' | 'map-outline' | 'folder' | 'folder-outline' | 'walk' | 'walk-outline' | 'settings' | 'settings-outline';
+
 const TabIcon = ({
   name,
   focused,
   badge,
 }: {
-  name: string;
+  name: IconName;
   focused: boolean;
   badge?: boolean;
 }) => (
   <View style={styles.iconContainer}>
-    <Text style={[styles.iconText, focused && styles.iconTextFocused]}>
-      {name}
-    </Text>
+    <Ionicons name={name} size={24} color={focused ? '#4f46e5' : '#888'} />
     {badge && <View style={styles.badge} />}
   </View>
 );
@@ -51,14 +51,18 @@ export default function TabsLayout() {
         options={{
           title: 'Map',
           headerTitle: activeProperty?.name || 'Compound Manager',
-          tabBarIcon: ({ focused }) => <TabIcon name="M" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'map' : 'map-outline'} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="projects"
         options={{
           title: 'Projects',
-          tabBarIcon: ({ focused }) => <TabIcon name="P" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'folder' : 'folder-outline'} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -67,7 +71,7 @@ export default function TabsLayout() {
           title: 'Missions',
           tabBarIcon: ({ focused }) => (
             <TabIcon
-              name="T"
+              name={focused ? 'walk' : 'walk-outline'}
               focused={focused}
               badge={activeMission !== null}
             />
@@ -78,7 +82,9 @@ export default function TabsLayout() {
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ focused }) => <TabIcon name="S" focused={focused} />,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'settings' : 'settings-outline'} focused={focused} />
+          ),
         }}
       />
     </Tabs>
@@ -91,14 +97,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 28,
     height: 28,
-  },
-  iconText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#888',
-  },
-  iconTextFocused: {
-    color: '#4f46e5',
   },
   badge: {
     position: 'absolute',

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,18 @@ import {
   TouchableOpacity,
   Alert,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
+import * as ImagePicker from 'expo-image-picker';
 import Mapbox, { Camera, MapView as MapboxMapView, UserLocation } from '@rnmapbox/maps';
+import { Ionicons } from '@expo/vector-icons';
 import { useMissionStore } from '../../src/stores/missionStore';
 import { useEndMission, useCancelMission, pointsToLineString } from '../../src/hooks/useMissions';
+import { useAddPhoto } from '../../src/hooks/usePhotos';
 import { MissionTrack } from '../../src/components/map/MissionTrack';
+import { captureAndUploadPhoto } from '../../src/lib/storage';
 
 export default function ActiveMissionScreen() {
   const mapRef = useRef<MapboxMapView>(null);
@@ -34,6 +39,9 @@ export default function ActiveMissionScreen() {
 
   const endMissionMutation = useEndMission();
   const cancelMissionMutation = useCancelMission();
+  const addPhotoMutation = useAddPhoto();
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [photoCount, setPhotoCount] = useState(0);
 
   // Start location tracking
   useEffect(() => {
@@ -143,6 +151,51 @@ export default function ActiveMissionScreen() {
     }
   }, [trackPoints]);
 
+  const handleTakePhoto = useCallback(async () => {
+    if (!activeMission) return;
+
+    // Request camera permission
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Camera permission is needed to take photos');
+      return;
+    }
+
+    setIsCapturing(true);
+    try {
+      // Get current location for geotagging
+      const location = await Location.getCurrentPositionAsync({});
+
+      // Capture photo
+      const result = await captureAndUploadPhoto({
+        missionId: activeMission.id,
+        location: {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        },
+      });
+
+      if (result) {
+        // Save to database
+        await addPhotoMutation.mutateAsync({
+          mission_id: activeMission.id,
+          storage_path: result.storagePath,
+          thumbnail_path: result.thumbnailPath,
+          location: {
+            type: 'Point',
+            coordinates: [location.coords.longitude, location.coords.latitude],
+          },
+          photo_type: 'during',
+        });
+        setPhotoCount((prev) => prev + 1);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to capture photo');
+    } finally {
+      setIsCapturing(false);
+    }
+  }, [activeMission, addPhotoMutation]);
+
   const formatDuration = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -212,16 +265,32 @@ export default function ActiveMissionScreen() {
             <Text style={styles.statValue}>{trackPoints.length}</Text>
             <Text style={styles.statLabel}>Points</Text>
           </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{photoCount}</Text>
+            <Text style={styles.statLabel}>Photos</Text>
+          </View>
         </View>
       </SafeAreaView>
 
       {/* Controls */}
       <View style={styles.controls}>
         <TouchableOpacity
-          style={styles.centerButton}
+          style={styles.controlButton}
           onPress={handleCenterOnTrack}
         >
-          <Text style={styles.centerButtonText}>+</Text>
+          <Ionicons name="locate" size={24} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.controlButton, styles.cameraButton]}
+          onPress={handleTakePhoto}
+          disabled={isCapturing}
+        >
+          {isCapturing ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Ionicons name="camera" size={24} color="#fff" />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -286,11 +355,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 120,
     right: 16,
+    gap: 12,
   },
-  centerButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  controlButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#1a1a2e',
     alignItems: 'center',
     justifyContent: 'center',
@@ -300,10 +370,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  centerButtonText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
+  cameraButton: {
+    backgroundColor: '#4f46e5',
   },
   bottomActions: {
     position: 'absolute',

@@ -38,6 +38,27 @@ export function useMissions(propertyId: string | undefined) {
   });
 }
 
+// Fetch missions for a specific project
+export function useProjectMissions(projectId: string | undefined) {
+  return useQuery({
+    queryKey: ['missions', 'project', projectId],
+    queryFn: async (): Promise<Mission[]> => {
+      if (!projectId) return [];
+
+      const { data, error } = await supabase
+        .from('missions')
+        .select('*')
+        .eq('project_id', projectId)
+        .eq('status', 'completed')
+        .order('started_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!projectId,
+  });
+}
+
 // Fetch a single mission
 export function useMission(missionId: string | undefined) {
   return useQuery({

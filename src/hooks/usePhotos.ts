@@ -134,6 +134,62 @@ export function useCreatePhoto() {
   });
 }
 
+interface AddPhotoInput {
+  project_id?: string;
+  mission_id?: string;
+  storage_path: string;
+  thumbnail_path?: string;
+  location?: GeoJSONPoint;
+  photo_type?: PhotoType;
+  notes?: string;
+}
+
+// Add a photo record (file already uploaded to storage)
+export function useAddPhoto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: AddPhotoInput): Promise<Photo> => {
+      const { location, ...rest } = input;
+      const insertData: Record<string, unknown> = {
+        ...rest,
+        captured_at: new Date().toISOString(),
+        photo_type: input.photo_type || 'general',
+      };
+
+      // Convert GeoJSON to PostGIS format
+      if (location?.coordinates) {
+        insertData.location = `POINT(${location.coordinates[0]} ${location.coordinates[1]})`;
+      }
+
+      const { data, error } = await supabase
+        .from('photos')
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        ...data,
+        url: getStorageUrl('photos', data.storage_path),
+      };
+    },
+    onSuccess: (data) => {
+      if (data.project_id) {
+        queryClient.invalidateQueries({
+          queryKey: ['photos', 'project', data.project_id],
+        });
+      }
+      if (data.mission_id) {
+        queryClient.invalidateQueries({
+          queryKey: ['photos', 'mission', data.mission_id],
+        });
+      }
+    },
+  });
+}
+
 // Delete a photo
 export function useDeletePhoto() {
   const queryClient = useQueryClient();

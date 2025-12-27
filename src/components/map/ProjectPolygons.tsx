@@ -1,10 +1,10 @@
-import { useCallback } from 'react';
-import { ShapeSource, FillLayer, LineLayer, SymbolLayer } from '@rnmapbox/maps';
-import { router } from 'expo-router';
-import type { Project, GeoJSONPolygon, GeoJSONLineString } from '../../types';
+import { ShapeSource, FillLayer, LineLayer } from '@rnmapbox/maps';
+import type { Project } from '../../types';
 
 interface ProjectPolygonsProps {
   projects: Project[];
+  onSelect?: (project: Project) => void;
+  selectedId?: string;
 }
 
 const STATUS_COLORS = {
@@ -14,24 +14,31 @@ const STATUS_COLORS = {
   completed: '#22c55e',
 };
 
-export function ProjectPolygons({ projects }: ProjectPolygonsProps) {
+export function ProjectPolygons({ projects, onSelect, selectedId }: ProjectPolygonsProps) {
+  // Create a map of project id to project for quick lookup
+  const projectMap = new Map(projects.map(p => [p.id, p]));
+
   // Convert projects to GeoJSON FeatureCollection
   const featureCollection = {
     type: 'FeatureCollection' as const,
     features: projects
       .filter((p) => p.area)
-      .map((project) => ({
-        type: 'Feature' as const,
-        id: project.id,
-        properties: {
+      .map((project) => {
+        const isSelected = project.id === selectedId;
+        return {
+          type: 'Feature' as const,
           id: project.id,
-          title: project.title,
-          status: project.status,
-          color: project.category?.color || STATUS_COLORS[project.status],
-          fillOpacity: project.status === 'completed' ? 0.3 : 0.4,
-        },
-        geometry: project.area!,
-      })),
+          properties: {
+            id: project.id,
+            title: project.title,
+            status: project.status,
+            color: project.category?.color || STATUS_COLORS[project.status],
+            fillOpacity: isSelected ? 0.5 : project.status === 'completed' ? 0.3 : 0.4,
+            lineWidth: isSelected ? 4 : 2,
+          },
+          geometry: project.area!,
+        };
+      }),
   };
 
   const polygons = featureCollection.features.filter(
@@ -41,6 +48,16 @@ export function ProjectPolygons({ projects }: ProjectPolygonsProps) {
   const lines = featureCollection.features.filter(
     (f) => f.geometry.type === 'LineString'
   );
+
+  const handlePress = (e: any) => {
+    const feature = e.features?.[0];
+    if (feature?.properties?.id) {
+      const project = projectMap.get(feature.properties.id);
+      if (project && onSelect) {
+        onSelect(project);
+      }
+    }
+  };
 
   return (
     <>
@@ -52,12 +69,7 @@ export function ProjectPolygons({ projects }: ProjectPolygonsProps) {
             type: 'FeatureCollection',
             features: polygons,
           }}
-          onPress={(e) => {
-            const feature = e.features?.[0];
-            if (feature?.properties?.id) {
-              router.push(`/project/${feature.properties.id}`);
-            }
-          }}
+          onPress={handlePress}
         >
           <FillLayer
             id="project-polygon-fill"
@@ -70,8 +82,8 @@ export function ProjectPolygons({ projects }: ProjectPolygonsProps) {
             id="project-polygon-outline"
             style={{
               lineColor: ['get', 'color'],
-              lineWidth: 2,
-              lineOpacity: 0.8,
+              lineWidth: ['get', 'lineWidth'],
+              lineOpacity: 0.9,
             }}
           />
         </ShapeSource>
@@ -85,19 +97,14 @@ export function ProjectPolygons({ projects }: ProjectPolygonsProps) {
             type: 'FeatureCollection',
             features: lines,
           }}
-          onPress={(e) => {
-            const feature = e.features?.[0];
-            if (feature?.properties?.id) {
-              router.push(`/project/${feature.properties.id}`);
-            }
-          }}
+          onPress={handlePress}
         >
           <LineLayer
             id="project-line"
             style={{
               lineColor: ['get', 'color'],
-              lineWidth: 4,
-              lineOpacity: 0.8,
+              lineWidth: ['get', 'lineWidth'],
+              lineOpacity: 0.9,
               lineCap: 'round',
               lineJoin: 'round',
             }}

@@ -24,15 +24,30 @@ const STATUS_FILTERS: { label: string; value: ProjectStatus | 'all' }[] = [
   { label: 'Completed', value: 'completed' },
 ];
 
+const STATUS_ORDER: Record<ProjectStatus, number> = {
+  pending: 0,
+  in_progress: 1,
+  review: 2,
+  completed: 3,
+};
+
 export default function ProjectsScreen() {
   const { activeProperty } = usePropertyStore();
   const { data: projects, isLoading, refetch, isRefetching } = useProjects(activeProperty?.id);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all');
 
-  const filteredProjects = projects?.filter((project) => {
-    if (statusFilter === 'all') return true;
-    return project.status === statusFilter;
-  });
+  const filteredProjects = projects
+    ?.filter((project) => {
+      if (statusFilter === 'all') return true;
+      return project.status === statusFilter;
+    })
+    .sort((a, b) => {
+      // First sort by status
+      const statusDiff = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+      if (statusDiff !== 0) return statusDiff;
+      // Then by created_at (most recent first)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   const handleProjectPress = useCallback((projectId: string) => {
     router.push(`/project/${projectId}`);

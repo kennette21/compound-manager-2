@@ -172,3 +172,84 @@ export async function deletePhoto(path: string): Promise<boolean> {
     return false;
   }
 }
+
+interface CaptureAndUploadOptions {
+  missionId?: string;
+  projectId?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+interface CaptureAndUploadResult {
+  storagePath: string;
+  thumbnailPath?: string;
+  url: string;
+  location: LocationCoords | null;
+}
+
+// Capture photo and upload in one operation
+export async function captureAndUploadPhoto(
+  options: CaptureAndUploadOptions
+): Promise<CaptureAndUploadResult | null> {
+  try {
+    // Launch camera
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: 'images',
+      quality: 0.8,
+      exif: true,
+    });
+
+    if (result.canceled || !result.assets?.[0]) {
+      return null;
+    }
+
+    const asset = result.assets[0];
+    const timestamp = Date.now();
+    const folder = options.missionId
+      ? `missions/${options.missionId}`
+      : options.projectId
+        ? `projects/${options.projectId}`
+        : 'general';
+    const fileName = `photo-${timestamp}.jpg`;
+    const path = `${folder}/${fileName}`;
+
+    // Convert to blob and upload
+    const blob = await uriToBlob(asset.uri);
+    const { error } = await supabase.storage.from('photos').upload(path, blob, {
+      contentType: 'image/jpeg',
+      upsert: false,
+    });
+
+    if (error) {
+      console.error('Upload error:', error);
+      return null;
+    }
+
+    // Build location from options or EXIF
+    let location: LocationCoords | null = null;
+    if (options.location) {
+      location = {
+        latitude: options.location.latitude,
+        longitude: options.location.longitude,
+        timestamp,
+      };
+    } else if (asset.exif?.GPSLatitude && asset.exif?.GPSLongitude) {
+      location = {
+        latitude: asset.exif.GPSLatitude,
+        longitude: asset.exif.GPSLongitude,
+        timestamp,
+      };
+    }
+
+    return {
+      storagePath: path,
+      url: getStorageUrl('photos', path),
+      location,
+    };
+  } catch (error) {
+    console.error('Error in captureAndUploadPhoto:', error);
+    return null;
+  }
+}

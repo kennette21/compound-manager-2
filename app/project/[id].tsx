@@ -9,13 +9,15 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useProject, useUpdateProject, useDeleteProject } from '../../src/hooks/useProjects';
 import { useProjectPhotos } from '../../src/hooks/usePhotos';
+import { useProjectMissions } from '../../src/hooks/useMissions';
 import { StatusBadge } from '../../src/components/project/StatusBadge';
 import { CategoryPill } from '../../src/components/project/CategoryPill';
 import { PhotoGallery } from '../../src/components/photos/PhotoGallery';
 import { LoadingSpinner } from '../../src/components/common/LoadingSpinner';
-import type { ProjectStatus } from '../../src/types';
+import type { ProjectStatus, Mission } from '../../src/types';
 
 const STATUS_FLOW: ProjectStatus[] = ['pending', 'in_progress', 'review', 'completed'];
 
@@ -23,9 +25,26 @@ export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: project, isLoading, refetch, isRefetching } = useProject(id);
   const { data: photos } = useProjectPhotos(id);
+  const { data: missions } = useProjectMissions(id);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const [updating, setUpdating] = useState(false);
+
+  const formatDuration = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
+  const formatDistance = (meters: number): string => {
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(1)} km`;
+    }
+    return `${Math.round(meters)} m`;
+  };
 
   const handleStatusChange = useCallback(async () => {
     if (!project) return;
@@ -198,6 +217,52 @@ export default function ProjectDetailScreen() {
           </View>
         </View>
 
+        {/* Missions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Work Sessions</Text>
+          {missions && missions.length > 0 ? (
+            <View style={styles.missionsContainer}>
+              {missions.map((mission) => (
+                <TouchableOpacity
+                  key={mission.id}
+                  style={styles.missionCard}
+                  onPress={() => router.push(`/mission/${mission.id}`)}
+                >
+                  <View style={styles.missionIcon}>
+                    <Ionicons name="walk" size={20} color="#4f46e5" />
+                  </View>
+                  <View style={styles.missionInfo}>
+                    <Text style={styles.missionDate}>
+                      {new Date(mission.started_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                    <View style={styles.missionStats}>
+                      {mission.duration_seconds && (
+                        <Text style={styles.missionStat}>
+                          {formatDuration(mission.duration_seconds)}
+                        </Text>
+                      )}
+                      {mission.distance_meters && (
+                        <Text style={styles.missionStat}>
+                          {formatDistance(mission.distance_meters)}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#666" />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyPhotos}>
+              <Text style={styles.emptyText}>No work sessions yet</Text>
+            </View>
+          )}
+        </View>
+
         {/* Photos */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -334,6 +399,42 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#888',
     fontSize: 14,
+  },
+  missionsContainer: {
+    gap: 8,
+  },
+  missionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a2e',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+  },
+  missionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(79, 70, 229, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  missionInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  missionDate: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  missionStats: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  missionStat: {
+    color: '#888',
+    fontSize: 13,
   },
   actions: {
     padding: 20,

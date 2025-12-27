@@ -7,8 +7,8 @@ import {
   Text,
   Dimensions,
   FlatList,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Photo } from '../../types';
 
 interface PhotoViewerProps {
@@ -57,18 +57,7 @@ export function PhotoViewer({ photos, initialIndex, onClose }: PhotoViewerProps)
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <SafeAreaView style={styles.header}>
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Text style={styles.closeButtonText}>X</Text>
-        </TouchableOpacity>
-        <Text style={styles.counter}>
-          {currentIndex + 1} / {photos.length}
-        </Text>
-        <View style={styles.placeholder} />
-      </SafeAreaView>
-
-      {/* Image Carousel */}
+      {/* Image Carousel - render first so it's behind */}
       <FlatList
         ref={flatListRef}
         data={photos}
@@ -84,25 +73,41 @@ export function PhotoViewer({ photos, initialIndex, onClose }: PhotoViewerProps)
           offset: SCREEN_WIDTH * index,
           index,
         })}
+        style={styles.flatList}
       />
 
-      {/* Footer */}
-      <SafeAreaView style={styles.footer}>
-        <Text style={styles.dateText}>
-          {formatDate(currentPhoto.captured_at)}
-        </Text>
-        {currentPhoto.photo_type && currentPhoto.photo_type !== 'general' && (
-          <View style={styles.typeBadge}>
-            <Text style={styles.typeText}>
-              {currentPhoto.photo_type.charAt(0).toUpperCase() +
-                currentPhoto.photo_type.slice(1)}
-            </Text>
-          </View>
-        )}
-        {currentPhoto.notes && (
-          <Text style={styles.notes}>{currentPhoto.notes}</Text>
-        )}
-      </SafeAreaView>
+      {/* Header - render after FlatList to be on top */}
+      <View style={styles.header} pointerEvents="box-none">
+        <SafeAreaView edges={['top']} style={styles.headerInner} pointerEvents="box-none">
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+          <Text style={styles.counter}>
+            {currentIndex + 1} / {photos.length}
+          </Text>
+          <View style={styles.placeholder} />
+        </SafeAreaView>
+      </View>
+
+      {/* Footer - render after FlatList to be on top */}
+      <View style={styles.footer} pointerEvents="box-none">
+        <SafeAreaView edges={['bottom']} style={styles.footerInner}>
+          <Text style={styles.dateText}>
+            {formatDate(currentPhoto.captured_at)}
+          </Text>
+          {currentPhoto.photo_type && currentPhoto.photo_type !== 'general' && (
+            <View style={styles.typeBadge}>
+              <Text style={styles.typeText}>
+                {currentPhoto.photo_type.charAt(0).toUpperCase() +
+                  currentPhoto.photo_type.slice(1)}
+              </Text>
+            </View>
+          )}
+          {currentPhoto.notes && (
+            <Text style={styles.notes}>{currentPhoto.notes}</Text>
+          )}
+        </SafeAreaView>
+      </View>
     </View>
   );
 }
@@ -112,30 +117,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
+  flatList: {
+    flex: 1,
+  },
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  headerInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   counter: {
@@ -144,7 +153,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   placeholder: {
-    width: 40,
+    width: 44,
   },
   imageContainer: {
     width: SCREEN_WIDTH,
@@ -161,6 +170,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+  },
+  footerInner: {
     padding: 16,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     gap: 8,
