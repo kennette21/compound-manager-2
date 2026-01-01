@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,15 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
+import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
 import { usePropertyStore } from '../../src/stores/propertyStore';
 import { useMissionStore } from '../../src/stores/missionStore';
-import { useMissions } from '../../src/hooks/useMissions';
+import { useMissions, useStartMission } from '../../src/hooks/useMissions';
 import { EmptyState } from '../../src/components/common/EmptyState';
 import { LoadingSpinner } from '../../src/components/common/LoadingSpinner';
 import type { Mission } from '../../src/types';
@@ -99,8 +103,10 @@ function MissionCard({
 
 export default function MissionsScreen() {
   const { activeProperty } = usePropertyStore();
-  const { activeMission } = useMissionStore();
+  const { activeMission, startMission } = useMissionStore();
   const { data: missions, isLoading, refetch, isRefetching } = useMissions(activeProperty?.id);
+  const startMissionMutation = useStartMission();
+  const [startingMission, setStartingMission] = useState(false);
 
   const handleMissionPress = useCallback((missionId: string) => {
     router.push(`/mission/${missionId}`);
@@ -109,6 +115,35 @@ export default function MissionsScreen() {
   const handleActiveMissionPress = useCallback(() => {
     router.push('/mission/active');
   }, []);
+
+  const handleStartMission = async () => {
+    if (!activeProperty) {
+      Alert.alert('No Property', 'Please select a property first in Settings');
+      return;
+    }
+
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Location Required',
+        'Location permission is required to track missions'
+      );
+      return;
+    }
+
+    setStartingMission(true);
+    try {
+      const mission = await startMissionMutation.mutateAsync({
+        property_id: activeProperty.id,
+      });
+      startMission(mission);
+      router.push('/mission/active');
+    } catch {
+      Alert.alert('Error', 'Failed to start mission');
+    } finally {
+      setStartingMission(false);
+    }
+  };
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -143,7 +178,7 @@ export default function MissionsScreen() {
         ListEmptyComponent={
           <EmptyState
             title="No Missions"
-            message="Start a mission from the map to track your work sessions"
+            message="Tap the + button to start tracking a work session"
           />
         }
         renderItem={({ item }) => (
@@ -153,6 +188,21 @@ export default function MissionsScreen() {
           />
         )}
       />
+
+      {/* Start Mission FAB - only show when no active mission */}
+      {!activeMission && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={handleStartMission}
+          disabled={startingMission}
+        >
+          {startingMission ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Ionicons name="play" size={24} color="#fff" />
+          )}
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -249,5 +299,21 @@ const styles = StyleSheet.create({
     color: '#4f46e5',
     fontSize: 12,
     fontWeight: '500',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#22c55e',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

@@ -1,5 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import * as FileSystem from 'expo-file-system';
+import { decode } from 'base64-arraybuffer';
 import { supabase, getStorageUrl } from './supabase';
 import type { LocationCoords, GeoJSONPoint } from '../types';
 
@@ -114,10 +116,12 @@ export async function pickPhoto(): Promise<PhotoCaptureResult | null> {
   }
 }
 
-// Convert URI to Blob for upload
-export async function uriToBlob(uri: string): Promise<Blob> {
-  const response = await fetch(uri);
-  return await response.blob();
+// Read file as base64 for upload (more reliable in React Native than blob)
+export async function readFileAsBase64(uri: string): Promise<string> {
+  const base64 = await FileSystem.readAsStringAsync(uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  return base64;
 }
 
 // Upload photo to Supabase Storage
@@ -127,14 +131,14 @@ export async function uploadPhoto(
   fileName?: string
 ): Promise<{ path: string; url: string } | null> {
   try {
-    const blob = await uriToBlob(uri);
+    const base64 = await readFileAsBase64(uri);
     const timestamp = Date.now();
     const name = fileName || `photo-${timestamp}.jpg`;
     const path = `${folder}/${name}`;
 
     const { error } = await supabase.storage
       .from('photos')
-      .upload(path, blob, {
+      .upload(path, decode(base64), {
         contentType: 'image/jpeg',
         upsert: false,
       });
@@ -215,9 +219,9 @@ export async function captureAndUploadPhoto(
     const fileName = `photo-${timestamp}.jpg`;
     const path = `${folder}/${fileName}`;
 
-    // Convert to blob and upload
-    const blob = await uriToBlob(asset.uri);
-    const { error } = await supabase.storage.from('photos').upload(path, blob, {
+    // Read file as base64 and upload
+    const base64 = await readFileAsBase64(asset.uri);
+    const { error } = await supabase.storage.from('photos').upload(path, decode(base64), {
       contentType: 'image/jpeg',
       upsert: false,
     });

@@ -192,17 +192,17 @@ export default function MapScreen() {
 
         {locationPermission && <UserLocation visible={true} />}
 
-        {/* Project markers and polygons - always visible */}
+        {/* Project markers and polygons - disable selection during drawing */}
         {projects && (
           <>
             <ProjectMarkers
               projects={projects.filter(p => p.location)}
-              onSelect={handleProjectSelect}
+              onSelect={mode === 'view' ? handleProjectSelect : undefined}
               selectedId={selectedProject?.id}
             />
             <ProjectPolygons
               projects={projects.filter(p => p.area)}
-              onSelect={handleProjectSelect}
+              onSelect={mode === 'view' ? handleProjectSelect : undefined}
               selectedId={selectedProject?.id}
             />
           </>

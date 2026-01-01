@@ -77,17 +77,21 @@ export function PhotoViewer({ photos, initialIndex, onClose }: PhotoViewerProps)
       />
 
       {/* Header - render after FlatList to be on top */}
-      <View style={styles.header} pointerEvents="box-none">
-        <SafeAreaView edges={['top']} style={styles.headerInner} pointerEvents="box-none">
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+      <SafeAreaView edges={['top']} style={styles.header} pointerEvents="box-none">
+        <View style={styles.headerInner}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={onClose}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
             <Text style={styles.closeButtonText}>✕</Text>
           </TouchableOpacity>
           <Text style={styles.counter}>
             {currentIndex + 1} / {photos.length}
           </Text>
           <View style={styles.placeholder} />
-        </SafeAreaView>
-      </View>
+        </View>
+      </SafeAreaView>
 
       {/* Footer - render after FlatList to be on top */}
       <View style={styles.footer} pointerEvents="box-none">
@@ -125,13 +129,15 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
+    zIndex: 10,
   },
   headerInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   closeButton: {

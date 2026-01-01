@@ -12,8 +12,8 @@ const STATUS_CONFIG: Record<
 > = {
   pending: {
     label: 'Pending',
-    bgColor: '#374151',
-    textColor: '#9ca3af',
+    bgColor: '#4a4458',
+    textColor: '#c4b5fd',
   },
   in_progress: {
     label: 'In Progress',
