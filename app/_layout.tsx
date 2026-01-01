@@ -7,8 +7,13 @@ import { StyleSheet } from 'react-native';
 import Mapbox from '@rnmapbox/maps';
 import { AuthProvider } from '../src/components/auth/AuthProvider';
 
-// Initialize Mapbox
-Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_TOKEN || '');
+// Initialize Mapbox - guard against missing token to prevent native crashes
+const mapboxToken = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
+if (mapboxToken) {
+  Mapbox.setAccessToken(mapboxToken);
+} else {
+  console.warn('EXPO_PUBLIC_MAPBOX_TOKEN is not set - Mapbox features will not work');
+}
 
 // Create a client
 const queryClient = new QueryClient({

@@ -9,13 +9,31 @@
       "distribution": "internal",
       "ios": {
         "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://yiraldxulxgbziwtmezv.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpcmFsZHh1bHhnYnppd3RtZXp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1MDcwMjQsImV4cCI6MjA4MjA4MzAyNH0.j0AsNp6qnQAr2ERFj3Nj1aEhDOvMTj4uDvTgwGMxWFU",
+        "EXPO_PUBLIC_MAPBOX_TOKEN": "pk.eyJ1Ijoia2VubmV0dGUyMSIsImEiOiJjbGVtczNqNnQxODhoM3JuNG9ibmppZ2poIn0.xMysapDs84RjtlB7gDMObQ",
+        "RNMAPBOX_MAPS_DOWNLOAD_TOKEN": "sk.eyJ1Ijoia2VubmV0dGUyMSIsImEiOiJjbWpqMXNuYXIwbnlpM2ZwdWxvOXNpYnJhIn0.rnXxzChUbBfLWCj6TmdSjA"
       }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://yiraldxulxgbziwtmezv.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpcmFsZHh1bHhnYnppd3RtZXp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1MDcwMjQsImV4cCI6MjA4MjA4MzAyNH0.j0AsNp6qnQAr2ERFj3Nj1aEhDOvMTj4uDvTgwGMxWFU",
+        "EXPO_PUBLIC_MAPBOX_TOKEN": "pk.eyJ1Ijoia2VubmV0dGUyMSIsImEiOiJjbGVtczNqNnQxODhoM3JuNG9ibmppZ2poIn0.xMysapDs84RjtlB7gDMObQ",
+        "RNMAPBOX_MAPS_DOWNLOAD_TOKEN": "sk.eyJ1Ijoia2VubmV0dGUyMSIsImEiOiJjbWpqMXNuYXIwbnlpM2ZwdWxvOXNpYnJhIn0.rnXxzChUbBfLWCj6TmdSjA"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://yiraldxulxgbziwtmezv.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpcmFsZHh1bHhnYnppd3RtZXp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1MDcwMjQsImV4cCI6MjA4MjA4MzAyNH0.j0AsNp6qnQAr2ERFj3Nj1aEhDOvMTj4uDvTgwGMxWFU",
+        "EXPO_PUBLIC_MAPBOX_TOKEN": "pk.eyJ1Ijoia2VubmV0dGUyMSIsImEiOiJjbGVtczNqNnQxODhoM3JuNG9ibmppZ2poIn0.xMysapDs84RjtlB7gDMObQ",
+        "RNMAPBOX_MAPS_DOWNLOAD_TOKEN": "sk.eyJ1Ijoia2VubmV0dGUyMSIsImEiOiJjbWpqMXNuYXIwbnlpM2ZwdWxvOXNpYnJhIn0.rnXxzChUbBfLWCj6TmdSjA"
+      }
     }
   }
 }
